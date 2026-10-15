@@ -8,7 +8,10 @@ from functools import lru_cache
 import numpy as np
 from rich.segment import Segment
 from rich.style import Style
-from textual.strip import Strip
+try:
+    from textual.strip import Strip
+except ImportError:
+    Strip = None
 
 from acidtoy.live import Meter
 
@@ -162,7 +165,8 @@ def _pair_style(r: int, g: int, b: int, r2: int, g2: int, b2: int) -> Style:
 
 
 def strips_from_rgb(rgb: np.ndarray, width: int, height: int):
-
+    if Strip is None:
+        raise RuntimeError("textual is not installed; terminal strip generation requires textual")
     h, w, _ = rgb.shape
     if h % 2:
         h -= 1

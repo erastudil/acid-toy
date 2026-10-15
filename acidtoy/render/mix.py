@@ -11,21 +11,34 @@ from acidtoy.render.synth_303 import render_pattern
 def _place(buf: np.ndarray, hit: np.ndarray, at: int, gain: float) -> None:
     if at >= len(buf) or gain <= 0:
         return
+    if at < 0:
+        hit = hit[-at:]
+        at = 0
+    if len(hit) == 0:
+        return
     n = min(len(hit), len(buf) - at)
     buf[at : at + n] += hit[:n] * gain
 
 
 def _hpf(x: np.ndarray, sr: int, fc: float) -> np.ndarray:
+    if len(x) == 0:
+        return x
     rc = 1.0 / (2 * np.pi * fc)
     a = rc / (rc + 1.0 / sr)
-    y = np.zeros_like(x)
-    px = 0.0
-    py = 0.0
-    for i, v in enumerate(x):
-        py = a * (py + v - px)
-        px = v
-        y[i] = py
-    return y
+    try:
+        from scipy.signal import lfilter
+        b = np.array([a, -a], dtype=np.float64)
+        a_coeffs = np.array([1.0, -a], dtype=np.float64)
+        return lfilter(b, a_coeffs, x)
+    except ImportError:
+        y = np.zeros_like(x)
+        px = 0.0
+        py = 0.0
+        for i, v in enumerate(x):
+            py = a * (py + v - px)
+            px = v
+            y[i] = py
+        return y
 
 
 def _delay(x: np.ndarray, sr: int, bpm: int, mix: float = 0.18) -> np.ndarray:
@@ -149,6 +162,8 @@ def render_track(track: Track, sr: int = 44100, bars: int | None = None) -> np.n
 
 def sum_buses(kick: np.ndarray, rest: np.ndarray) -> np.ndarray:
     """kick owns the floor. clip the rest, never scale the sub to make the 303 fit."""
+    if len(kick) == 0:
+        return np.array([], dtype=np.float32)
     duck = 0.28 + 0.72 * (1.0 - np.clip(np.abs(kick) * 1.35, 0.0, 1.0))
     rest = np.tanh(rest * duck * 1.05)
     peak_k = float(np.max(np.abs(kick))) or 1.0

@@ -5,7 +5,10 @@ import time
 from dataclasses import dataclass, field
 
 import numpy as np
-import sounddevice as sd
+try:
+    import sounddevice as sd
+except ImportError:
+    sd = None
 
 from acidtoy.engine.combinator import generate, next_phrases
 from acidtoy.ir.models import Phrase, Track
@@ -122,6 +125,8 @@ class LiveEngine:
         if self.track is None:
             self.load(1)
         if self.stream is None:
+            if sd is None:
+                raise RuntimeError("sounddevice is not installed; live audio playback unavailable")
             self.stream = sd.OutputStream(
                 samplerate=self.SR,
                 channels=1,

@@ -86,13 +86,21 @@ def perc_metal(sr: int, dur: float = 0.18) -> np.ndarray:
 
 
 def _hp(x: np.ndarray, sr: int, fc: float) -> np.ndarray:
+    if len(x) == 0:
+        return x
     rc = 1.0 / (2 * np.pi * fc)
     a = rc / (rc + 1.0 / sr)
-    y = np.zeros_like(x)
-    prev_x = 0.0
-    prev_y = 0.0
-    for i, v in enumerate(x):
-        prev_y = a * (prev_y + v - prev_x)
-        prev_x = v
-        y[i] = prev_y
-    return y
+    try:
+        from scipy.signal import lfilter
+        b = np.array([a, -a], dtype=np.float64)
+        a_coeffs = np.array([1.0, -a], dtype=np.float64)
+        return lfilter(b, a_coeffs, x)
+    except ImportError:
+        y = np.zeros_like(x)
+        prev_x = 0.0
+        prev_y = 0.0
+        for i, v in enumerate(x):
+            prev_y = a * (prev_y + v - prev_x)
+            prev_x = v
+            y[i] = prev_y
+        return y

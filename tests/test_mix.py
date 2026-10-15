@@ -46,5 +46,20 @@ class TestMix(unittest.TestCase):
         self.assertGreater(floor, air * 0.15)
 
 
+    def test_sum_buses_empty(self) -> None:
+        mix = sum_buses(np.array([]), np.array([]))
+        self.assertEqual(len(mix), 0)
+
+    def test_hpf_filter_accuracy(self) -> None:
+        from acidtoy.render.mix import _hpf
+        from acidtoy.render.drums import _hp
+        x = np.sin(np.linspace(0, 100, 1000, dtype=np.float64))
+        y1 = _hpf(x, 44100, 115.0)
+        y2 = _hp(x, 44100, 115.0)
+        self.assertEqual(len(y1), len(x))
+        self.assertEqual(len(y2), len(x))
+        self.assertAlmostEqual(float(np.max(np.abs(y1 - y2))), 0.0, places=10)
+
+
 if __name__ == "__main__":
     unittest.main()

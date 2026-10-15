@@ -46,9 +46,12 @@ def cmd_wav(args: argparse.Namespace) -> int:
 
 
 def cmd_tui(_args: argparse.Namespace) -> int:
-    from acidtoy.tui import run
-
-    return run()
+    try:
+        from acidtoy.tui import run
+        return run()
+    except ImportError as e:
+        print(f"acidtoy tui error: {e}. Please install textual: pip install textual", file=sys.stderr)
+        return 1
 
 
 def main(argv: list[str] | None = None) -> int:
