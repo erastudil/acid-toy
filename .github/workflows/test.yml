@@ -1,0 +1,20 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: portaudio for sounddevice import
+        run: sudo apt-get update && sudo apt-get install -y libportaudio2
+      - name: install test deps, GL viz excluded
+        run: python -m pip install "numpy>=1.26" "scipy>=1.11" "textual>=8.0" "sounddevice>=0.5" pytest
+      - name: pytest
+        run: python -m pytest tests -v
